@@ -99,4 +99,25 @@ public class EventControllerTests {
             .andExpect(status().isBadRequest())
             .andDo(print());
   }
+
+  @Test // 잘못된 날짜 범위, price -> 애노테이션 검증 불가 -> 여기서는 customValidator로 검증
+  public void createEvent_Bad_Request_Wrong_Input() throws Exception {
+    EventDto eventDto = EventDto.builder()
+            .name("spring")
+            .description("start spring!")
+            .beginEnrollmentDateTime(LocalDateTime.of(2022, 3, 20, 12, 0))
+            .closeEnrollmentDateTime(LocalDateTime.of(2022, 3, 10, 12, 0))
+            .beginEventDateTime(LocalDateTime.of(2022, 3, 20, 12, 0))
+            .endEventDateTime(LocalDateTime.of(2022, 3, 10, 12, 0))
+            .basePrice(10000)
+            .maxPrice(200)
+            .limitOfEnrollment(100)
+            .build();
+
+    this.mockMvc.perform(post(EVENT_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(this.objectMapper.writeValueAsString(eventDto)))
+            .andExpect(status().isBadRequest())
+            .andDo(print());
+  }
 }
