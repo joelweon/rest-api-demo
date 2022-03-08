@@ -29,5 +29,5 @@ public class Event {
   private boolean offline;
   private boolean free;
   @Enumerated(EnumType.STRING)
-  private EventStatus EventStatus;
+  private EventStatus eventStatus;
 }
