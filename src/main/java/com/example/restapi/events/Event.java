@@ -27,6 +27,7 @@ public class Event {
   private int maxPrice; // (optional)
   private int limitOfEnrollment;
   private boolean offline;
+  private boolean free;
   @Enumerated(EnumType.STRING)
   private EventStatus EventStatus;
 }
