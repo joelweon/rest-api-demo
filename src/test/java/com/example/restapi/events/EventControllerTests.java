@@ -1,12 +1,12 @@
 package com.example.restapi.events;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,7 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class)
-@WebMvcTest // 슬라이스용 테스트라 Web용 빈들만 등록 해줌(repository는 등록해주지 않음
+@SpringBootTest // @SpringBootApplication 하위의 Bean들을 찾아서 등록해줌(Web app과 가장 유사한 형태가 됨)
+@AutoConfigureMockMvc
+// @WebMvcTest // 슬라이스용 테스트라 Web용 빈들만 등록 해줌(repository는 등록해주지 않음
 public class EventControllerTests {
 
   // 웹과 관련한 빈들만 등록 -> 단위 테스트라고 보기는 어려움 -dispatcher(핸들러, 매퍼, 컨버터) eventcontroller...
@@ -30,14 +32,12 @@ public class EventControllerTests {
   @Autowired
   ObjectMapper objectMapper;
 
-  @MockBean
-  EventRepository eventRepository; // null인 객체가 mocking 됨
-
-
   // accept 헤더를 주는게 좋음
   @Test
   public void createEvent() throws Exception {
+    // id(100) free(true) eventStatus... 를 넣더라도 Dto로 전달하면서 무시됨
     Event event = Event.builder()
+            .id(100)
             .name("spring")
             .description("start spring!")
             .beginEnrollmentDateTime(LocalDateTime.of(2022, 3, 1, 12, 0))
@@ -48,9 +48,10 @@ public class EventControllerTests {
             .maxPrice(200)
             .limitOfEnrollment(100)
             .location("강남역")
+            .free(true)
+            .offline(true)
+            .eventStatus(EventStatus.PUBLISHED)
             .build();
-    event.setId(100);
-    Mockito.when(eventRepository.save(event)).thenReturn(event);
 
     mockMvc.perform(post("/api/events")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -60,6 +61,10 @@ public class EventControllerTests {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("id").exists())
             .andExpect(header().exists(HttpHeaders.LOCATION))
-            .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE));
+            .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE))
+            .andExpect(jsonPath("id").value(Matchers.not(100)))
+            .andExpect(jsonPath("free").value(Matchers.not(true)))
+            .andExpect(jsonPath("offline").value(Matchers.not(true)))
+            .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()));
   }
 }

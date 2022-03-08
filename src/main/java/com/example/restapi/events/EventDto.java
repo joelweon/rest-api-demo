@@ -1,21 +1,17 @@
 package com.example.restapi.events;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode(of = "id") // 상호 참조 주의
-@Entity
-public class Event {
+@Data
+@Builder @NoArgsConstructor @AllArgsConstructor
+public class EventDto {
 
-  @Id @GeneratedValue
-  private Integer id;
+  // 받기로 한 프로퍼티만 허용
   private String name;
   private String description;
   private LocalDateTime beginEnrollmentDateTime;
@@ -26,8 +22,4 @@ public class Event {
   private int basePrice; // (optional)
   private int maxPrice; // (optional)
   private int limitOfEnrollment;
-  private boolean offline;
-  private boolean free;
-  @Enumerated(EnumType.STRING)
-  private EventStatus eventStatus = EventStatus.DRAFT;
 }
