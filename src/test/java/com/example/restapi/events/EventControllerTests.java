@@ -32,6 +32,8 @@ public class EventControllerTests {
   @Autowired
   ObjectMapper objectMapper;
 
+  private final String EVENT_URL = "/api/events";
+
   @Test // 입력값만 넘기기
   public void createEvent() throws Exception {
     EventDto event = EventDto.builder()
@@ -47,7 +49,7 @@ public class EventControllerTests {
             .location("강남역")
             .build();
 
-    mockMvc.perform(post("/api/events")
+    mockMvc.perform(post(EVENT_URL)
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaTypes.HAL_JSON)
                     .content(objectMapper.writeValueAsString(event)))
@@ -58,7 +60,6 @@ public class EventControllerTests {
             .andExpect(header().string(HttpHeaders.CONTENT_TYPE, MediaTypes.HAL_JSON_VALUE))
             .andExpect(jsonPath("id").value(Matchers.not(100)))
             .andExpect(jsonPath("free").value(Matchers.not(true)))
-            .andExpect(jsonPath("offline").value(Matchers.not(true)))
             .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()));
   }
 
@@ -80,11 +81,22 @@ public class EventControllerTests {
             .eventStatus(EventStatus.PUBLISHED)
             .build();
 
-    mockMvc.perform(post("/api/events")
+    mockMvc.perform(post(EVENT_URL)
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaTypes.HAL_JSON)
                     .content(objectMapper.writeValueAsString(event)))
             .andDo(print())
             .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  public void createEvent_Bad_Request_Empty_Input() throws Exception {
+    EventDto eventDto = EventDto.builder().build();
+
+    this.mockMvc.perform(post(EVENT_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(this.objectMapper.writeValueAsString(eventDto)))
+            .andExpect(status().isBadRequest())
+            .andDo(print());
   }
 }
