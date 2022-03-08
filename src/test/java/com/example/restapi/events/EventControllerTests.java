@@ -3,8 +3,10 @@ package com.example.restapi.events;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -18,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
-@WebMvcTest
+@WebMvcTest // 슬라이스용 테스트라 Web용 빈들만 등록 해줌(repository는 등록해주지 않음
 public class EventControllerTests {
 
   // 웹과 관련한 빈들만 등록 -> 단위 테스트라고 보기는 어려움 -dispatcher(핸들러, 매퍼, 컨버터) eventcontroller...
@@ -27,6 +29,9 @@ public class EventControllerTests {
 
   @Autowired
   ObjectMapper objectMapper;
+
+  @MockBean
+  EventRepository eventRepository; // null인 객체가 mocking 됨
 
 
   // accept 헤더를 주는게 좋음
@@ -44,6 +49,8 @@ public class EventControllerTests {
             .limitOfEnrollment(100)
             .location("강남역")
             .build();
+    event.setId(100);
+    Mockito.when(eventRepository.save(event)).thenReturn(event);
 
     mockMvc.perform(post("/api/events")
                     .contentType(MediaType.APPLICATION_JSON)

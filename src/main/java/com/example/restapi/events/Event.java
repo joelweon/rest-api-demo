@@ -2,6 +2,7 @@ package com.example.restapi.events;
 
 import lombok.*;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Getter
@@ -10,8 +11,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = "id") // 상호 참조 주의
+@Entity
 public class Event {
 
+  @Id @GeneratedValue
   private Integer id;
   private String name;
   private String description;
@@ -24,5 +27,6 @@ public class Event {
   private int maxPrice; // (optional)
   private int limitOfEnrollment;
   private boolean offline;
+  @Enumerated(EnumType.STRING)
   private EventStatus EventStatus;
 }
