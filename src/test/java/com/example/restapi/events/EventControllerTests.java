@@ -32,12 +32,9 @@ public class EventControllerTests {
   @Autowired
   ObjectMapper objectMapper;
 
-  // accept 헤더를 주는게 좋음
-  @Test
+  @Test // 입력값만 넘기기
   public void createEvent() throws Exception {
-    // id(100) free(true) eventStatus... 를 넣더라도 Dto로 전달하면서 무시됨
-    Event event = Event.builder()
-            .id(100)
+    EventDto event = EventDto.builder()
             .name("spring")
             .description("start spring!")
             .beginEnrollmentDateTime(LocalDateTime.of(2022, 3, 1, 12, 0))
@@ -48,9 +45,6 @@ public class EventControllerTests {
             .maxPrice(200)
             .limitOfEnrollment(100)
             .location("강남역")
-            .free(true)
-            .offline(true)
-            .eventStatus(EventStatus.PUBLISHED)
             .build();
 
     mockMvc.perform(post("/api/events")
@@ -66,5 +60,31 @@ public class EventControllerTests {
             .andExpect(jsonPath("free").value(Matchers.not(true)))
             .andExpect(jsonPath("offline").value(Matchers.not(true)))
             .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()));
+  }
+
+  @Test // 입력값 이외의 값을 넘기면 에러로 처리(strict한 방법)
+  public void createEvent_Bad_Request() throws Exception {
+    Event event = Event.builder()
+            .id(100)
+            .name("spring")
+            .description("start spring!")
+            .beginEnrollmentDateTime(LocalDateTime.of(2022, 3, 1, 12, 0))
+            .closeEnrollmentDateTime(LocalDateTime.of(2022, 3, 7, 12, 0))
+            .beginEventDateTime(LocalDateTime.of(2022, 3, 8, 12, 0))
+            .endEventDateTime(LocalDateTime.of(2022, 3, 9, 12, 0))
+            .basePrice(100)
+            .maxPrice(200)
+            .limitOfEnrollment(100)
+            .location("강남역")
+            .free(true)
+            .eventStatus(EventStatus.PUBLISHED)
+            .build();
+
+    mockMvc.perform(post("/api/events")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaTypes.HAL_JSON)
+                    .content(objectMapper.writeValueAsString(event)))
+            .andDo(print())
+            .andExpect(status().isBadRequest());
   }
 }
