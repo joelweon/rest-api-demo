@@ -2,6 +2,7 @@ package com.example.restapi.events;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.Errors;
@@ -44,7 +45,12 @@ public class EventController {
     Event newEvent = this.eventRepository.save(event);
 
     // linkTo(): 컨트롤러나 핸들러 메소드로부터 URI 정보 읽어올 때 쓰는 메소드
-    URI createUri = linkTo(EventController.class).slash(newEvent.getId()).toUri();
-    return ResponseEntity.created(createUri).body(event);
+    // location 헤더에 넣어줄 URI
+    WebMvcLinkBuilder selfLinkBuilder = linkTo(EventController.class).slash(newEvent.getId());
+    URI createUri = selfLinkBuilder.toUri();
+    EventResource eventResource = new EventResource(event);
+    eventResource.add(linkTo(EventController.class).withRel("query-event"));
+    eventResource.add(selfLinkBuilder.withRel("update-event"));
+    return ResponseEntity.created(createUri).body(eventResource);
   }
 }
