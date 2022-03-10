@@ -1,8 +1,15 @@
 package com.example.restapi.events;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 
 class EventTest {
@@ -32,67 +39,51 @@ class EventTest {
     assertEquals(event.getDescription(), description);
   }
 
-  @Test
-  public void testFree() {
+  @ParameterizedTest
+  @MethodSource
+  public void testFree(int basePrice, int maxPrice, boolean isFree) {
     // Given
     Event event = Event.builder()
-            .basePrice(0)
-            .maxPrice(0)
+            .basePrice(basePrice)
+            .maxPrice(maxPrice)
             .build();
 
     // When
     event.update();
 
     // Then
-    assertTrue(event.isFree());
-
-    // Given
-    event = Event.builder()
-            .basePrice(100)
-            .maxPrice(0)
-            .build();
-
-    // When
-    event.update();
-
-    // Then
-    assertFalse(event.isFree());
-
-    // Given
-    event = Event.builder()
-            .basePrice(0)
-            .maxPrice(100)
-            .build();
-
-    // When
-    event.update();
-
-    // Then
-    assertFalse(event.isFree());
+    assertEquals(event.isFree(), isFree);
   }
 
-  @Test
-  public void testOffline() {
+  // JUnit Jupiter는 convention에 의해 현재 @ParameterizedTest의 이름과 같은 factory method를 찾는다.
+  // 다르게 주고 싶다면 @MethodSource("이름") 선언
+  private static Stream<Arguments> testFree() {
+    return Stream.of(
+            Arguments.arguments(0, 0, true),
+            Arguments.arguments(100, 0, false),
+            Arguments.arguments(0, 100, false));
+    // private static Object[] parametersForTestFree() {
+    //   return new Object[] {
+    //           new Object[] { 0, 0, true},
+    //           new Object[] { 100, 0, false},
+    //           new Object[] { 0, 100, false},
+    //   };
+    // }
+  }
+
+  @ParameterizedTest
+  @CsvSource({"강남역, true", ", false"})
+  public void testOffline(String location, boolean isOffline) {
     // Given
     Event event = Event.builder()
-            .location("강남역")
+            .location(location)
             .build();
 
     // When
     event.update();
 
     // Then
-    assertTrue(event.isOffline());
-
-    // Given
-    event = Event.builder()
-            .build();
-
-    // When
-    event.update();
-
-    // Then
-    assertFalse(event.isOffline());
+    assertEquals(event.isOffline(), isOffline);
   }
 
 }
