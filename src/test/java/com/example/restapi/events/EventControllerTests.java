@@ -19,7 +19,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import static org.springframework.restdocs.headers.HeaderDocumentation.*;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.linkWithRel;
+import static org.springframework.restdocs.hypermedia.HypermediaDocumentation.links;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -70,9 +74,56 @@ public class EventControllerTests {
             .andExpect(jsonPath("offline").value(true))
             .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()))
             .andExpect(jsonPath("_links.self").exists())
-            .andExpect(jsonPath("_links.update-event").exists())
             .andExpect(jsonPath("_links.query-event").exists())
-            .andDo(document("create-event"));
+            .andExpect(jsonPath("_links.update-event").exists())
+            // 스니펫 추가
+            .andDo(document("create-event",
+                    links(
+                            linkWithRel("self").description("link to self"),
+                            linkWithRel("query-event").description("link to query-event"),
+                            linkWithRel("update-event").description("link to update-event")
+                    ),
+                    requestHeaders(
+                            headerWithName(HttpHeaders.ACCEPT).description("ACCEPT header"),
+                            headerWithName(HttpHeaders.CONTENT_TYPE).description("CONTENT_TYPE header")
+                    ),
+                    requestFields(
+                            fieldWithPath("name").description("Name of new event"),
+                            fieldWithPath("description").description("description of new event"),
+                            fieldWithPath("beginEnrollmentDateTime").description("beginEnrollmentDateTime of new event"),
+                            fieldWithPath("closeEnrollmentDateTime").description("closeEnrollmentDateTime of new event"),
+                            fieldWithPath("beginEventDateTime").description("beginEventDateTime of new event"),
+                            fieldWithPath("endEventDateTime").description("endEventDateTime of new event"),
+                            fieldWithPath("location").description("location of new event"),
+                            fieldWithPath("basePrice").description("basePrice of new event"),
+                            fieldWithPath("maxPrice").description("maxPrice of new event"),
+                            fieldWithPath("limitOfEnrollment").description("limitOfEnrollment of new event")
+                    ),
+                    responseHeaders(
+                            headerWithName("Location").description("Location header - 새로 생성된 이벤트를 조회하는 URL"),
+                            headerWithName("Content-Type").description("Content-Type header - application/hal+json")
+                    ),
+                    responseFields(
+                            fieldWithPath("id").description("Name of new event"),
+                            fieldWithPath("name").description("Name of new event"),
+                            fieldWithPath("description").description("description of new event"),
+                            fieldWithPath("beginEnrollmentDateTime").description("beginEnrollmentDateTime of new event"),
+                            fieldWithPath("closeEnrollmentDateTime").description("closeEnrollmentDateTime of new event"),
+                            fieldWithPath("beginEventDateTime").description("beginEventDateTime of new event"),
+                            fieldWithPath("endEventDateTime").description("endEventDateTime of new event"),
+                            fieldWithPath("location").description("location of new event"),
+                            fieldWithPath("basePrice").description("basePrice of new event"),
+                            fieldWithPath("maxPrice").description("maxPrice of new event"),
+                            fieldWithPath("limitOfEnrollment").description("limitOfEnrollment of new event"),
+                            fieldWithPath("offline").description("It tells if this event is offline meeting or not"),
+                            fieldWithPath("free").description("It tells if this event is free or not"),
+                            fieldWithPath("eventStatus").description("eventStatus"),
+
+                            fieldWithPath("_links.self.href").description("link to self"),
+                            fieldWithPath("_links.query-event.href").description("link to query-event"),
+                            fieldWithPath("_links.update-event.href").description("link to update-event")
+                    )
+            ));
   }
   // HATEOAS
   // - 응답으로 F/E에서 처리하기 쉽도록 Links를 제공하는 것.
