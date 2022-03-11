@@ -1,13 +1,16 @@
 package com.example.restapi.events;
 
+import com.example.restapi.common.RestDocsConfiguration;
 import com.example.restapi.common.TestDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -24,6 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest // @SpringBootApplication 하위의 Bean들을 찾아서 등록해줌(Web app과 가장 유사한 형태가 됨)
 @AutoConfigureMockMvc
 // @WebMvcTest // 슬라이스용 테스트라 Web용 빈들만 등록 해줌(repository는 등록해주지 않음
+@AutoConfigureRestDocs
+@Import(RestDocsConfiguration.class)
 public class EventControllerTests {
 
   // 웹과 관련한 빈들만 등록 -> 단위 테스트라고 보기는 어려움 -dispatcher(핸들러, 매퍼, 컨버터) eventcontroller...
@@ -65,9 +71,12 @@ public class EventControllerTests {
             .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()))
             .andExpect(jsonPath("_links.self").exists())
             .andExpect(jsonPath("_links.update-event").exists())
-            .andExpect(jsonPath("_links.query-event").exists());
+            .andExpect(jsonPath("_links.query-event").exists())
+            .andDo(document("create-event"));
   }
-  // HATEOAS - link 정보가 없으면 현재 상태에서 어떠한 애플리케이션 상태로 전이를 하지 못함
+  // HATEOAS
+  // - 응답으로 F/E에서 처리하기 쉽도록 Links를 제공하는 것.
+  // - link 정보가 없으면 현재 상태에서 어떠한 애플리케이션 상태로 전이를 하지 못함
 
   @Test
   @DisplayName("입력 받을 수 없는 값을 사용한 경우에 에러가 발생하는 테스트")
