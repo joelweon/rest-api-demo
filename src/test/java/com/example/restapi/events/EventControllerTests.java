@@ -73,15 +73,13 @@ public class EventControllerTests {
             .andExpect(jsonPath("free").value(false))
             .andExpect(jsonPath("offline").value(true))
             .andExpect(jsonPath("eventStatus").value(EventStatus.DRAFT.name()))
-            .andExpect(jsonPath("_links.self").exists())
-            .andExpect(jsonPath("_links.query-event").exists())
-            .andExpect(jsonPath("_links.update-event").exists())
             // 스니펫 추가
             .andDo(document("create-event",
                     links(
                             linkWithRel("self").description("link to self"),
                             linkWithRel("query-event").description("link to query-event"),
-                            linkWithRel("update-event").description("link to update-event")
+                            linkWithRel("update-event").description("link to update-event"),
+                            linkWithRel("profile").description("link to profile")
                     ),
                     requestHeaders(
                             headerWithName(HttpHeaders.ACCEPT).description("ACCEPT header"),
@@ -121,7 +119,8 @@ public class EventControllerTests {
 
                             fieldWithPath("_links.self.href").description("link to self"),
                             fieldWithPath("_links.query-event.href").description("link to query-event"),
-                            fieldWithPath("_links.update-event.href").description("link to update-event")
+                            fieldWithPath("_links.update-event.href").description("link to update-event"),
+                            fieldWithPath("_links.profile.href").description("link to profile")
                     )
             ));
   }
