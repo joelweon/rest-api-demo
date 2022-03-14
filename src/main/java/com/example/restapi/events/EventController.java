@@ -15,6 +15,7 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -64,11 +65,6 @@ public class EventController {
     return ResponseEntity.created(createUri).body(eventResource);
   }
 
-  // badRequest인 경우 에러를 받아서 Resource로 변환(index링크 추가)하여 본문에 담아줌
-  private ResponseEntity<ErrorResource> badRequest(Errors errors) {
-    return ResponseEntity.badRequest().body(new ErrorResource(errors));
-  }
-
   @GetMapping
   public ResponseEntity queryEvents(Pageable pageable, PagedResourcesAssembler<Event> assembler) {
     Page<Event> page = this.eventRepository.findAll(pageable);
@@ -88,5 +84,39 @@ public class EventController {
     EventResource eventResource = new EventResource(event);
     eventResource.add(Link.of("/docs/index.html#resources-events-get", LinkRelation.of("profile")));
     return ResponseEntity.ok(eventResource);
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity updateEvent(@PathVariable Integer id, @Valid @RequestBody EventDto eventDto, Errors errors) {
+    Optional<Event> optionalEvent = this.eventRepository.findById(id);
+    if (optionalEvent.isEmpty()) {
+      return ResponseEntity.notFound().build();
+    }
+
+    // default 조건에 맞지 않거나 필수값이 없는 경우(EventDto validation)
+    if (errors.hasErrors()) {
+      return this.badRequest(errors);
+    }
+
+    // 비즈니스 로직 검증
+    eventValidator.validate(eventDto, errors);
+    if (errors.hasErrors()) {
+      return this.badRequest(errors);
+    }
+
+    Event existingEvent = optionalEvent.get();
+    modelMapper.map(eventDto, existingEvent);
+    Event savedEvent = this.eventRepository.save(existingEvent);
+
+    EventResource eventResource = new EventResource(savedEvent);
+    eventResource.add(Link.of("/docs/index.html#resources-events-update", LinkRelation.of("polyfile")));
+
+    return ResponseEntity.ok(eventResource);
+  }
+
+
+  // badRequest인 경우 에러를 받아서 Resource로 변환(index링크 추가)하여 본문에 담아줌
+  private ResponseEntity<ErrorResource> badRequest(Errors errors) {
+    return ResponseEntity.badRequest().body(new ErrorResource(errors));
   }
 }
