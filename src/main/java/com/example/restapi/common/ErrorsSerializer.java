@@ -13,6 +13,8 @@ public class ErrorsSerializer extends JsonSerializer<Errors> { // ObjectMapper�
 
   @Override
   public void serialize(Errors errors, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+    // 스프링 부트 2.3으로 올라가면서 Jackson 라이브러리가 더이상 Array부터 만드는걸 허용하지 않음
+    jsonGenerator.writeFieldName("errors");
     jsonGenerator.writeStartArray();
 
     errors.getFieldErrors().forEach(e -> {
