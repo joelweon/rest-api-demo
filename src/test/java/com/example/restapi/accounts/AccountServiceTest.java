@@ -5,11 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -40,5 +43,17 @@ class AccountServiceTest {
 
     // Then
     assertEquals(userDetails.getPassword(), password);
+  }
+
+  @Test
+  public void findByUsernameFail() {
+
+    String username = "random@test.com";
+    try {
+      this.accountService.loadUserByUsername(username);
+      fail("supposed to be failed");
+    } catch (UsernameNotFoundException e) {
+      assertTrue(e.getMessage().contains(username));
+    }
   }
 }
