@@ -131,6 +131,7 @@ public class EventControllerTests extends BaseControllerTest {
                             fieldWithPath("offline").description("It tells if this event is offline meeting or not"),
                             fieldWithPath("free").description("It tells if this event is free or not"),
                             fieldWithPath("eventStatus").description("eventStatus"),
+                            fieldWithPath("manager.id").description("id of manager"),
 
                             fieldWithPath("_links.self.href").description("link to self"),
                             fieldWithPath("_links.query-event.href").description("link to query-event"),
@@ -144,17 +145,18 @@ public class EventControllerTests extends BaseControllerTest {
   }
 
   private String getBearerToken() throws Exception {
-    return "Bearer " + getAccessToken();
+    return getBearerToken(true);
   }
 
-  private String getAccessToken() throws Exception {
+  private String getBearerToken(Boolean needToCreateAccount) throws Exception {
+    return "Bearer " + getAccessToken(needToCreateAccount);
+  }
+
+  private String getAccessToken(Boolean needToCreateAccount) throws Exception {
     // Given
-    Account admin = Account.builder()
-            .email(appProperties.getUserUsername())
-            .password(appProperties.getUserPassword())
-            .roles(Set.of(AccountRole.ADMIN, AccountRole.USER))
-            .build();
-    this.accountService.saveAccount(admin);
+    if (needToCreateAccount) {
+      createAccount();
+    }
 
     // When & Then
     ResultActions perform = this.mockMvc.perform(post("/oauth/token")
@@ -166,6 +168,15 @@ public class EventControllerTests extends BaseControllerTest {
     var responseBody = response.getContentAsString();
     JacksonJsonParser jsonParser = new JacksonJsonParser();
     return jsonParser.parseMap(responseBody).get("access_token").toString();
+  }
+
+  private Account createAccount() {
+    Account admin = Account.builder()
+            .email(appProperties.getUserUsername())
+            .password(appProperties.getUserPassword())
+            .roles(Set.of(AccountRole.ADMIN, AccountRole.USER))
+            .build();
+    return this.accountService.saveAccount(admin);
   }
 
 
@@ -281,12 +292,12 @@ public class EventControllerTests extends BaseControllerTest {
             .andDo(document("query-events"));
   }
 
-
   @Test
   @DisplayName("GET: 기존 이벤트 하나 조회하기")
   public void getEvent() throws Exception {
     // Given
-    Event event = this.generateEvent(100);
+    Account account = this.createAccount();
+    Event event = this.generateEvent(100, account);
 
     // When & Then
     this.mockMvc.perform(get(EVENT_URL + "/{id}", event.getId()))
@@ -311,7 +322,8 @@ public class EventControllerTests extends BaseControllerTest {
   @DisplayName("PUT: 이벤트를 정상적으로 수정하기")
   public void updateEvent() throws Exception {
     // Given
-    Event event = this.generateEvent(100);
+    Account account = this.createAccount();
+    Event event = this.generateEvent(100, account);
 
     String eventName = "Updated Name";
     EventDto eventDto = this.modelMapper.map(event, EventDto.class);
@@ -320,7 +332,7 @@ public class EventControllerTests extends BaseControllerTest {
 
     // When & Then
     this.mockMvc.perform(put(EVENT_URL + "/{id}", event.getId())
-                    .header(HttpHeaders.AUTHORIZATION, getBearerToken())
+                    .header(HttpHeaders.AUTHORIZATION, getBearerToken(false))
                     .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaTypes.HAL_JSON)
                     .content(objectMapper.writeValueAsString(eventDto)))
@@ -397,9 +409,19 @@ public class EventControllerTests extends BaseControllerTest {
             .andDo(print());
   }
 
+  private Event generateEvent(int index, Account account) {
+    Event event = buildEvent(index);
+    event.setManager(account);
+    return this.eventRepository.save(event);
+  }
 
   private Event generateEvent(int index) {
-    Event event = Event.builder()
+    Event event = buildEvent(index);
+    return this.eventRepository.save(event);
+  }
+
+  private Event buildEvent(int index) {
+    return Event.builder()
             .name("event" + index)
             .description("test event")
             .beginEnrollmentDateTime(LocalDateTime.of(2022, 3, 1, 12, 0))
@@ -414,7 +436,5 @@ public class EventControllerTests extends BaseControllerTest {
             .offline(true)
             .eventStatus(EventStatus.DRAFT)
             .build();
-
-    return this.eventRepository.save(event);
   }
 }
