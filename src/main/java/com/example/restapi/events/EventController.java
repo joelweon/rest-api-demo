@@ -1,5 +1,7 @@
 package com.example.restapi.events;
 
+import com.example.restapi.accounts.Account;
+import com.example.restapi.accounts.CurrentUser;
 import com.example.restapi.common.ErrorResource;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -66,11 +68,17 @@ public class EventController {
   }
 
   @GetMapping
-  public ResponseEntity queryEvents(Pageable pageable, PagedResourcesAssembler<Event> assembler) {
+  public ResponseEntity queryEvents(Pageable pageable,
+                                    PagedResourcesAssembler<Event> assembler,
+                                    @CurrentUser Account account) {
     Page<Event> page = this.eventRepository.findAll(pageable);
-    var resource = assembler.toModel(page, EventResource::new);
-    resource.add(Link.of("/docs/index.html#resources-query-list", LinkRelation.of("profile")));
-    return ResponseEntity.ok(resource);
+    var pagedResources = assembler.toModel(page, EventResource::new);
+    pagedResources.add(Link.of("/docs/index.html#resources-query-list", LinkRelation.of("profile")));
+
+    if (account != null) {
+      pagedResources.add(linkTo(EventController.class).withRel("create-event"));
+    }
+    return ResponseEntity.ok(pagedResources);
   }
 
   @GetMapping("/{id}")
